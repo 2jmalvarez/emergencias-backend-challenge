@@ -28,6 +28,8 @@ npm install
 npm run dev
 ```
 
+Nota: `DATABASE_URL` es obligatoria y se toma desde el archivo `.env`.
+
 Servidor en `http://localhost:3000`.
 
 ## Scripts

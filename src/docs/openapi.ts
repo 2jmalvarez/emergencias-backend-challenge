@@ -6,7 +6,7 @@ export const openApiDocument = {
     description:
       'API RESTful para gestionar una agenda de contactos con telefonos, direcciones y actividades (llamadas, reuniones y emails).',
   },
-  servers: [{ url: 'http://localhost:3000' }],
+  servers: [{ url: 'http://localhost:3001' }],
   tags: [
     { name: 'Contactos', description: 'Operaciones sobre contactos de la agenda.' },
     { name: 'Actividades', description: 'Operaciones sobre actividades de contactos.' },
@@ -457,8 +457,16 @@ export const openApiDocument = {
         properties: {
           personId: { type: 'integer', example: 1 },
           activityType: { $ref: '#/components/schemas/ActivityType' },
-          activityDate: { type: 'string', format: 'date-time', example: '2026-05-08T14:30:00.000Z' },
-          description: { type: 'string', nullable: true, example: 'Llamada de seguimiento de turno.' },
+          activityDate: {
+            type: 'string',
+            format: 'date-time',
+            example: '2026-05-08T14:30:00.000Z',
+          },
+          description: {
+            type: 'string',
+            nullable: true,
+            example: 'Llamada de seguimiento de turno.',
+          },
         },
       },
       CreatedActivity: {
@@ -468,7 +476,11 @@ export const openApiDocument = {
           personId: { type: 'integer', example: 1 },
           activityType: { $ref: '#/components/schemas/ActivityType' },
           activityDate: { type: 'string', example: '2026-05-08T14:30:00.000Z' },
-          description: { type: 'string', nullable: true, example: 'Llamada de seguimiento de turno.' },
+          description: {
+            type: 'string',
+            nullable: true,
+            example: 'Llamada de seguimiento de turno.',
+          },
         },
       },
       ActivityWithContact: {
@@ -478,7 +490,11 @@ export const openApiDocument = {
           personId: { type: 'integer', example: 1 },
           activityType: { $ref: '#/components/schemas/ActivityType' },
           activityDate: { type: 'string', example: '2026-05-08T14:30:00.000Z' },
-          description: { type: 'string', nullable: true, example: 'Llamada de seguimiento de turno.' },
+          description: {
+            type: 'string',
+            nullable: true,
+            example: 'Llamada de seguimiento de turno.',
+          },
           contact: {
             type: 'object',
             properties: {

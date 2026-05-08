@@ -2,11 +2,11 @@ import type { z } from 'zod';
 
 import type {
   createContactBodySchema,
-  updateContactBodySchema,
+  updateContactSchema,
 } from './contact.schemas';
 
 export type CreateContactDto = z.infer<typeof createContactBodySchema>;
-export type UpdateContactDto = z.infer<typeof updateContactBodySchema>;
+export type UpdateContactDto = z.infer<typeof updateContactSchema>['body'];
 
 export type ContactSummary = {
   id: number;

@@ -16,7 +16,7 @@ export class ContactService {
   public async findByEmail(email: string): Promise<ContactDetails> {
     const contact = await this.repository.findByEmail(email);
     if (!contact) {
-      throw new AppError('Contact not found', 404);
+      throw new AppError('Contacto no encontrado.', 404);
     }
     return contact;
   }
@@ -39,7 +39,7 @@ export class ContactService {
     try {
       const updated = await this.repository.update(id, input);
       if (!updated) {
-        throw new AppError('Contact not found', 404);
+        throw new AppError('Contacto no encontrado.', 404);
       }
       return updated;
     } catch (error: unknown) {
@@ -50,7 +50,7 @@ export class ContactService {
   public async delete(id: number): Promise<void> {
     const deleted = await this.repository.delete(id);
     if (!deleted) {
-      throw new AppError('Contact not found', 404);
+      throw new AppError('Contacto no encontrado.', 404);
     }
   }
 
@@ -58,15 +58,15 @@ export class ContactService {
     if (typeof error === 'object' && error !== null && 'code' in error) {
       const code = String(error.code);
       if (code === '23505') {
-        throw new AppError('Email already exists', 409);
+        throw new AppError('El email ya existe.', 409);
       }
       if (code === '23503') {
-        throw new AppError('Related entity not found', 400);
+        throw new AppError('Entidad relacionada no encontrada.', 400);
       }
     }
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError('Database operation failed', 500);
+    throw new AppError('Fallo una operacion de base de datos.', 500);
   }
 }

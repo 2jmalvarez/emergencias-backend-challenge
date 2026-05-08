@@ -12,10 +12,10 @@ export class ActivityService {
       if (typeof error === 'object' && error !== null && 'code' in error) {
         const code = String(error.code);
         if (code === '23503') {
-          throw new AppError('Contact not found', 404);
+          throw new AppError('Contacto no encontrado.', 404);
         }
       }
-      throw new AppError('Database operation failed', 500);
+      throw new AppError('Fallo una operacion de base de datos.', 500);
     }
   }
 

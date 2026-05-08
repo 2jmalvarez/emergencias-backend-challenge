@@ -324,7 +324,7 @@ export const openApiDocument = {
         content: {
           'application/json': {
             schema: { $ref: '#/components/schemas/ErrorResponse' },
-            example: { message: 'Contact not found' },
+            example: { message: 'Contacto no encontrado.' },
           },
         },
       },
@@ -333,7 +333,7 @@ export const openApiDocument = {
         content: {
           'application/json': {
             schema: { $ref: '#/components/schemas/ErrorResponse' },
-            example: { message: 'Email already exists' },
+            example: { message: 'El email ya existe.' },
           },
         },
       },
@@ -350,7 +350,7 @@ export const openApiDocument = {
         content: {
           'application/json': {
             schema: { $ref: '#/components/schemas/ErrorResponse' },
-            example: { message: 'Unexpected internal error' },
+            example: { message: 'Error interno inesperado.' },
           },
         },
       },
@@ -509,13 +509,13 @@ export const openApiDocument = {
       ErrorResponse: {
         type: 'object',
         properties: {
-          message: { type: 'string', example: 'Unexpected internal error' },
+          message: { type: 'string', example: 'Error interno inesperado.' },
         },
       },
       ValidationErrorResponse: {
         type: 'object',
         properties: {
-          message: { type: 'string', example: 'Validation error' },
+          message: { type: 'string', example: 'Error de validacion.' },
           issues: {
             type: 'array',
             items: {
@@ -526,7 +526,7 @@ export const openApiDocument = {
                   type: 'array',
                   items: { oneOf: [{ type: 'string' }, { type: 'number' }] },
                 },
-                message: { type: 'string', example: 'Expected string, received number' },
+                message: { type: 'string', example: 'Tipo de dato invalido.' },
               },
             },
           },

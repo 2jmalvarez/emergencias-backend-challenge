@@ -158,7 +158,7 @@ export class ContactRepository {
   private async findByIdOrThrow(id: number): Promise<ContactDetails> {
     const entity = await this.findById(id);
     if (!entity) {
-      throw new Error('Contact not found after operation');
+      throw new Error('No se encontro el contacto luego de la operacion.');
     }
     return entity;
   }

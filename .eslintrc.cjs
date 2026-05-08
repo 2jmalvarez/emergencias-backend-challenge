@@ -14,7 +14,10 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   rules: {
     '@typescript-eslint/no-explicit-any': 'error',
-    '@typescript-eslint/consistent-type-imports': 'error',
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      { prefer: 'type-imports', disallowTypeAnnotations: false },
+    ],
     '@typescript-eslint/no-floating-promises': 'error',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'unused-imports/no-unused-imports': 'error',
@@ -22,7 +25,7 @@ module.exports = {
       'error',
       {
         alphabetize: { order: 'asc', caseInsensitive: true },
-        groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index']],
+        groups: ['builtin', 'external', 'type', 'sibling', 'internal', 'parent', 'index'],
         'newlines-between': 'always',
       },
     ],

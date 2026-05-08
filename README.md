@@ -221,7 +221,7 @@ El loader usa cache y fallback `dist -> src`.
 | `npm run db:test:reset`         | Reinicia la DB de test desde cero para pruebas reproducibles.           |
 | `npm run test`                  | Ejecuta la suite completa de tests con salida verbose.                  |
 | `npm run test:unit`             | Ejecuta tests unitarios (modulos y shared).                             |
-| `npm run test:integration`      | Ejecuta solo tests de integracion contra `.env.test`.                 |
+| `npm run test:integration`      | Ejecuta solo tests de integracion contra `.env.test`.                   |
 | `npm run test:integration:full` | Resetea DB de test y luego ejecuta tests de integracion.                |
 | `npm run test:coverage`         | Ejecuta tests con reporte de cobertura.                                 |
 | `npm run lint`                  | Corre ESLint sobre todo el proyecto.                                    |

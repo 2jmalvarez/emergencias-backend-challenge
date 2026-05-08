@@ -1,96 +1,222 @@
 # Emergencias Backend Challenge
 
-API RESTful en Node.js + TypeScript + Express para gestionar contactos y actividades.
+Esta API fue diseñada como una base backend reutilizable y escalable, pensada para servir como scaffolding de futuros proyectos: una estructura lista para crecer, con convenciones claras, separación de responsabilidades y un flujo de trabajo consistente desde el inicio. Sobre esa base, implementa un sistema de gestión de contactos orientado a escenarios reales, modelando personas con múltiples teléfonos y direcciones, junto con actividades de seguimiento como llamadas, reuniones y emails, priorizando trazabilidad funcional y consistencia de datos en cada endpoint.
 
-## Stack y arquitectura
+La solución fue desarrollada con Node.js, Express y TypeScript, aplicando una arquitectura por capas para desacoplar reglas de negocio, transporte HTTP y persistencia SQL. Se incorporó validación estricta con Zod para garantizar contratos de entrada tipados y predecibles, respuestas HTTP estandarizadas para simplificar la integración desde clientes, y manejo centralizado de errores para exponer fallas técnicas de forma consistente.
 
-- Node.js + TypeScript + Express
-- Postgres (docker local)
-- Validacion y DTOs con Zod
-- Arquitectura por capas: routes -> controllers -> services -> repositories
-- SQL separado en archivos por modulo
+Además, se configuraron entornos separados para desarrollo y testing de integración utilizando bases de datos independientes, permitiendo validar escritura real, relaciones entre entidades y comportamiento transaccional sin depender de mocks. El proyecto también prioriza buenas prácticas de mantenibilidad, tipado estricto, uso correcto de verbos HTTP y status codes, junto con una estructura preparada para evolucionar con seguridad y sostener calidad técnica a largo plazo.
 
-## Requisitos
+## Instalacion y primer arranque
+
+### 1) Requisitos
 
 - Node.js 20+
 - Docker
 
-## Variables de entorno
-
-Copia `.env.example` a `.env`.
-
-- `PORT`: puerto HTTP de la API
-- `DATABASE_URL`: conexion a DB de desarrollo
-- `DATABASE_URL_TEST`: conexion a DB de test/integracion
-
-Notas:
-
-- En `NODE_ENV=test` se usa `DATABASE_URL_TEST`.
-- En desarrollo/produccion se usa `DATABASE_URL`.
-
-## Base de datos local
-
-### Desarrollo
-
-```bash
-npm run db:up
-```
-
-- Host: `127.0.0.1`
-- Puerto: `55434`
-- DB: `emergencias_dev`
-- User: `emergencias`
-- Password: `emergencias`
-
-### Test
-
-```bash
-npm run db:test:up
-```
-
-- Host: `127.0.0.1`
-- Puerto: `55435`
-- DB: `emergencias_test`
-- User: `emergencias`
-- Password: `emergencias`
-
-## Seeds
-
-- Dataset base CI/local: `infra/local/postgres/seed/default/*.sql`
-- Snapshots sanitizados (reservado): `infra/local/postgres/seed/snapshots/*`
-
-## Ejecucion rapida
+### 2) Instalar dependencias
 
 ```bash
 npm install
+```
+
+### 3) Configurar entorno
+
+```bash
+copy .env.example .env
+```
+
+Variables principales:
+
+- `PORT`: puerto HTTP de la API
+- `DATABASE_URL`: conexion a base de desarrollo
+- `DATABASE_URL_TEST`: conexion a base de test
+
+### 4) Levantar base de desarrollo
+
+```bash
 npm run db:up
+```
+
+### 5) Levantar API
+
+```bash
 npm run dev
 ```
 
-API: `http://localhost:3001`
-Swagger: `http://localhost:3001/docs`
+Accesos:
+
+- API: `http://localhost:3001`
+- Swagger: `http://localhost:3001/docs`
+
+---
+
+## Por que hay dos bases (dev y test)
+
+Se definieron dos servicios Postgres separados:
+
+- `emergencias-postgres-dev` (`55434`, DB `emergencias_dev`)
+- `emergencias-postgres-test` (`55435`, DB `emergencias_test`)
+
+Objetivo:
+
+- poder desarrollar y probar manualmente sin afectar datos de tests;
+- ejecutar pruebas de integracion que escriben y limpian datos reales;
+- validar todos los endpoints end-to-end sin necesidad de mockear persistencia.
+
+Esto permite comprobar comportamiento real de validaciones, constraints, relaciones y consultas SQL.
+
+---
+
+## Arquitectura y decisiones tecnicas
+
+Arquitectura por capas:
+
+- `routes`: define endpoints y middlewares
+- `controllers`: entrada/salida HTTP
+- `services`: reglas de negocio
+- `repositories`: acceso SQL
+- `shared`: utilidades comunes (errores, logging, respuestas)
+
+Patrones aplicados:
+
+- Repository Pattern
+- Service Layer
+- Validacion en borde con Zod
+- Mapeo centralizado de errores SQLSTATE
+
+---
+
+## Modelo de datos
+
+Tablas implementadas:
+
+- `person`
+- `phone`
+- `phone_type`
+- `address`
+- `contact_activities`
+
+Reglas clave:
+
+- `person.email` unico
+- `contact_activities.activity_type` restringido a `call | meeting | email`
+- FKs con `ON DELETE CASCADE` para mantener integridad
+
+Diagrama entidad-relacion (MERMAID):
+
+```mermaid
+erDiagram
+    PERSON ||--o{ PHONE : "person_id FK (ON DELETE CASCADE)"
+    PHONE_TYPE ||--o{ PHONE : "phone_type_id FK"
+    PERSON ||--o{ ADDRESS : "person_id FK (ON DELETE CASCADE)"
+    PERSON ||--o{ CONTACT_ACTIVITIES : "person_id FK (ON DELETE CASCADE)"
+
+    PERSON {
+        BIGSERIAL id PK
+        VARCHAR_120 first_name "NOT NULL"
+        VARCHAR_120 last_name "NOT NULL"
+        TEXT date_of_birth "NOT NULL"
+        VARCHAR_255 email "NOT NULL, UNIQUE"
+    }
+
+    PHONE_TYPE {
+        BIGSERIAL id PK
+        VARCHAR_100 type_name "NOT NULL, UNIQUE"
+    }
+
+    PHONE {
+        BIGINT id PK
+        VARCHAR_30 number "NOT NULL"
+        BIGINT person_id FK "NOT NULL"
+        BIGINT phone_type_id FK "NOT NULL"
+    }
+
+    ADDRESS {
+        BIGSERIAL id PK
+        BIGINT person_id FK "NOT NULL"
+        VARCHAR_120 locality "NOT NULL"
+        VARCHAR_120 street "NOT NULL"
+        INTEGER number "NOT NULL"
+        TEXT notes "NULL"
+    }
+
+    CONTACT_ACTIVITIES {
+        BIGSERIAL id PK
+        BIGINT person_id FK "NOT NULL"
+        VARCHAR_20 activity_type "NOT NULL, CHECK(call|meeting|email)"
+        TEXT activity_date "NOT NULL"
+        TEXT description "NULL"
+    }
+```
+
+---
+
+## Estandar de respuestas
+
+Se usa un contrato uniforme:
+
+- exito: `{ "data": ..., "error": null }`
+- error: `{ "data": null, "error": { "message": "...", "code"?: "...", "details"?: ... } }`
+
+Esto simplifica el consumo desde frontend o clientes externos.
+
+---
+
+## Errores de base centralizados
+
+Los SQLSTATE se centralizan en:
+
+- `src/shared/errors/db-error-codes.ts`
+- `src/shared/errors/db-error-mapper.ts`
+
+Ejemplos:
+
+- `23505` -> email duplicado (`409`)
+- `23503` -> entidad relacionada no encontrada
+- `23514` / `22P02` -> datos invalidos (`400`)
+
+---
+
+## SQL por modulo
+
+Consultas separadas en archivos para facilitar mantenimiento y pruebas:
+
+- `src/modules/contacts/sql/*.sql`
+- `src/modules/activities/sql/*.sql`
+
+El loader usa cache y fallback `dist -> src`.
+
+---
+
+## Seeds
+
+- Base local/CI: `infra/local/postgres/seed/default/*.sql`
+- Carpeta reservada para snapshots sanitizados: `infra/local/postgres/seed/snapshots/*`
+
+---
 
 ## Scripts
 
-- `npm run dev`: modo desarrollo
-- `npm run build`: compila TypeScript
-- `npm run start`: build + run
-- `npm run db:up`: levanta DB dev
-- `npm run db:down`: detiene DB dev
-- `npm run db:reset`: reinicia DB dev limpia
-- `npm run db:test:up`: levanta DB test
-- `npm run db:test:down`: detiene DB test
-- `npm run db:test:reset`: reinicia DB test limpia
-- `npm run test`: corre tests
-- `npm run test:integration`: corre integracion contra DB test
-- `npm run test:integration:full`: reset DB test + integracion
-- `npm run lint`: linter
+| Script                          | Descripcion                                                             |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`                   | Levanta la API en modo desarrollo con recarga automatica (`tsx watch`). |
+| `npm run build`                 | Compila TypeScript a `dist/`.                                           |
+| `npm run start`                 | Ejecuta build y luego levanta la API compilada.                         |
+| `npm run db:up`                 | Levanta la DB de desarrollo (`emergencias-postgres-dev`).               |
+| `npm run db:down`               | Detiene la DB de desarrollo.                                            |
+| `npm run db:reset`              | Reinicia la DB de desarrollo desde cero (contenedor + volumen).         |
+| `npm run db:test:up`            | Levanta la DB de test (`emergencias-postgres-test`).                    |
+| `npm run db:test:down`          | Detiene la DB de test.                                                  |
+| `npm run db:test:reset`         | Reinicia la DB de test desde cero para pruebas reproducibles.           |
+| `npm run test`                  | Ejecuta la suite completa de tests con salida verbose.                  |
+| `npm run test:integration`      | Ejecuta solo tests de integracion contra `DATABASE_URL_TEST`.           |
+| `npm run test:integration:full` | Resetea DB de test y luego ejecuta tests de integracion.                |
+| `npm run lint`                  | Corre ESLint sobre todo el proyecto.                                    |
+| `npm run lint:fix`              | Corre ESLint y aplica fixes automaticos cuando es posible.              |
+| `npm run format`                | Formatea el proyecto con Prettier.                                      |
+| `npm run format:check`          | Verifica formato sin modificar archivos.                                |
 
-## Smoke test recomendado
-
-```bash
-npm run test:integration:full
-```
+---
 
 ## Endpoints
 
@@ -103,54 +229,34 @@ npm run test:integration:full
 - `POST /activities`
 - `GET /activities/search?personId=&activityType=`
 
-## Ejemplos curl
+Toda la documentacion de request/response, status codes y ejemplos se encuentra en Swagger:
 
-Crear contacto:
+- `http://localhost:3001/docs`
 
-```bash
-curl -X POST http://localhost:3001/contacts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName":"Ana",
-    "lastName":"Garcia",
-    "dateOfBirth":"1992-04-20",
-    "email":"ana.garcia@example.com",
-    "phones":[{"number":"11-5555-1234","phoneTypeId":1}],
-    "addresses":[{"locality":"CABA","street":"Corrientes","number":1234}]
-  }'
-```
+---
 
-Buscar por email:
+## Testing de integracion (sin mocks de DB)
+
+Para ejecutar pruebas reales contra la base de test:
 
 ```bash
-curl "http://localhost:3001/contacts/by-email?email=ana.garcia@example.com"
+npm run db:test:up
+npm run test:integration
 ```
 
-Actualizar contacto:
+Flujo completo recomendado:
 
 ```bash
-curl -X PATCH http://localhost:3001/contacts/1 \
-  -H "Content-Type: application/json" \
-  -d '{"firstName":"Ana Maria","lastName":"Garcia","dateOfBirth":"1992-04-20","email":"ana.maria@example.com"}'
+npm run test:integration:full
 ```
 
-Crear actividad:
+Suites actuales:
 
-```bash
-curl -X POST http://localhost:3001/activities \
-  -H "Content-Type: application/json" \
-  -d '{"personId":1,"activityType":"call","activityDate":"2026-05-08T14:30:00.000Z","description":"Llamada de seguimiento"}'
-```
+- `tests/integration/contacts.integration.test.ts`
+- `tests/integration/activity.integration.test.ts`
+- `tests/integration/system.integration.test.ts`
 
-Buscar actividades:
+Si la DB de test no esta levantada, el setup falla con mensaje explicito indicando:
 
-```bash
-curl "http://localhost:3001/activities/search?personId=1&activityType=call"
-```
-
-## SQL por modulo
-
-- Activities: `src/modules/activities/sql/*.sql`
-- Contacts: `src/modules/contacts/sql/*.sql`
-
-El runtime lee SQL desde `dist` y, si no existe, usa `src` como respaldo.
+- `npm run db:test:up`
+- `npm run db:test:reset`

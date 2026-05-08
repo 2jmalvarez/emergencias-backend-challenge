@@ -57,6 +57,7 @@ export const openApiDocument = {
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
           409: { $ref: '#/components/responses/Conflict' },
           422: { $ref: '#/components/responses/ValidationError' },
           500: { $ref: '#/components/responses/InternalError' },
@@ -220,6 +221,7 @@ export const openApiDocument = {
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
           404: { $ref: '#/components/responses/NotFound' },
           409: { $ref: '#/components/responses/Conflict' },
           422: { $ref: '#/components/responses/ValidationError' },
@@ -271,6 +273,7 @@ export const openApiDocument = {
               },
             },
           },
+          400: { $ref: '#/components/responses/BadRequest' },
           404: { $ref: '#/components/responses/NotFound' },
           422: { $ref: '#/components/responses/ValidationError' },
           500: { $ref: '#/components/responses/InternalError' },
@@ -319,6 +322,15 @@ export const openApiDocument = {
   },
   components: {
     responses: {
+      BadRequest: {
+        description: 'Solicitud invalida a nivel de reglas de negocio o base de datos',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/ErrorResponse' },
+            example: { message: 'Los datos enviados no cumplen las reglas de la base.' },
+          },
+        },
+      },
       NotFound: {
         description: 'Recurso no encontrado',
         content: {

@@ -7,6 +7,7 @@ import { openApiDocument } from './docs/openapi';
 import { activityRoutes } from './modules/activities/activity.routes';
 import { contactRoutes } from './modules/contacts/contact.routes';
 import { errorHandler } from './shared/errors/error-handler.middleware';
+import { sendSuccess } from './shared/http/api-response';
 import { httpLogger } from './shared/logging/http-logger';
 
 export const app = express();
@@ -17,7 +18,7 @@ app.use(express.json());
 app.use(httpLogger);
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
+  sendSuccess(res, 200, { status: 'ok' });
 });
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));

@@ -1,6 +1,8 @@
 import { ContactRepository } from './contact.repository';
 import type { ContactDetails, ContactSummary, CreateContactDto, UpdateContactDto } from './contact.types';
 import { AppError } from '../../shared/errors/app-error';
+import { PG_ERROR_CODES } from '../../shared/errors/db-error-codes';
+import { throwMappedDbError } from '../../shared/errors/db-error-mapper';
 
 export class ContactService {
   private readonly repository = new ContactRepository();
@@ -55,18 +57,23 @@ export class ContactService {
   }
 
   private mapDbError(error: unknown): never {
-    if (typeof error === 'object' && error !== null && 'code' in error) {
-      const code = String(error.code);
-      if (code === '23505') {
-        throw new AppError('El email ya existe.', 409);
-      }
-      if (code === '23503') {
-        throw new AppError('Entidad relacionada no encontrada.', 400);
-      }
-    }
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError('Fallo una operacion de base de datos.', 500);
+    return throwMappedDbError(error, {
+      [PG_ERROR_CODES.UNIQUE_VIOLATION]: {
+        message: 'El email ya existe.',
+        statusCode: 409,
+      },
+      [PG_ERROR_CODES.FOREIGN_KEY_VIOLATION]: {
+        message: 'Entidad relacionada no encontrada.',
+        statusCode: 400,
+      },
+      [PG_ERROR_CODES.CHECK_VIOLATION]: {
+        message: 'Los datos enviados no cumplen las reglas de la base.',
+        statusCode: 400,
+      },
+      [PG_ERROR_CODES.INVALID_TEXT_REPRESENTATION]: {
+        message: 'Los datos enviados no cumplen las reglas de la base.',
+        statusCode: 400,
+      },
+    });
   }
 }

@@ -1,6 +1,7 @@
 import { ActivityRepository } from './activity.repository';
 import type { ActivityWithContact, CreateActivityDto } from './activity.types';
-import { AppError } from '../../shared/errors/app-error';
+import { PG_ERROR_CODES } from '../../shared/errors/db-error-codes';
+import { throwMappedDbError } from '../../shared/errors/db-error-mapper';
 
 export class ActivityService {
   private readonly repository = new ActivityRepository();
@@ -9,13 +10,20 @@ export class ActivityService {
     try {
       return await this.repository.create(input);
     } catch (error: unknown) {
-      if (typeof error === 'object' && error !== null && 'code' in error) {
-        const code = String(error.code);
-        if (code === '23503') {
-          throw new AppError('Contacto no encontrado.', 404);
-        }
-      }
-      throw new AppError('Fallo una operacion de base de datos.', 500);
+      return throwMappedDbError(error, {
+        [PG_ERROR_CODES.FOREIGN_KEY_VIOLATION]: {
+          message: 'Contacto no encontrado.',
+          statusCode: 404,
+        },
+        [PG_ERROR_CODES.CHECK_VIOLATION]: {
+          message: 'Los datos enviados no cumplen las reglas de la base.',
+          statusCode: 400,
+        },
+        [PG_ERROR_CODES.INVALID_TEXT_REPRESENTATION]: {
+          message: 'Los datos enviados no cumplen las reglas de la base.',
+          statusCode: 400,
+        },
+      });
     }
   }
 

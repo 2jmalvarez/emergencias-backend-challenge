@@ -13,15 +13,18 @@ describe('Integracion real de endpoints (DB test)', () => {
 
   const createContact = async (overrides?: Record<string, unknown>) => {
     const timestamp = Date.now();
-    const payload = {
+    const payload: Record<string, unknown> = {
       firstName: 'Test',
       lastName: 'User',
       dateOfBirth: '1992-04-20',
       email: `test.${timestamp}@example.com`,
       phones: [{ number: `11-55${String(timestamp).slice(-4)}`, phoneTypeId }],
       addresses: [{ locality: 'CABA', street: 'Corrientes', number: 1234 }],
-      ...(overrides ?? {}),
     };
+
+    if (overrides) {
+      Object.assign(payload, overrides);
+    }
 
     return request(app).post('/contacts').send(payload);
   };
@@ -50,16 +53,17 @@ describe('Integracion real de endpoints (DB test)', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body.id).toBeDefined();
-      expect(response.body.phones.length).toBeGreaterThan(0);
-      expect(response.body.addresses.length).toBeGreaterThan(0);
+      expect(response.body.data.id).toBeDefined();
+      expect(response.body.data.phones.length).toBeGreaterThan(0);
+      expect(response.body.data.addresses.length).toBeGreaterThan(0);
+      expect(response.body.error).toBeNull();
     });
 
     it('rechaza la creacion con body invalido y devuelve 422 de validacion', async () => {
       const response = await request(app).post('/contacts').send({ firstName: 'A' });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
@@ -71,15 +75,15 @@ describe('Integracion real de endpoints (DB test)', () => {
       const response = await request(app).get('/contacts/by-email').query({ email });
 
       expect(response.status).toBe(200);
-      expect(response.body.email).toBe(email);
-      expect(response.body.firstName).toBe('Luis');
+      expect(response.body.data.email).toBe(email);
+      expect(response.body.data.firstName).toBe('Luis');
     });
 
     it('rechaza la busqueda cuando el email tiene formato invalido y devuelve 422', async () => {
       const response = await request(app).get('/contacts/by-email').query({ email: 'email-invalido' });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
@@ -92,15 +96,15 @@ describe('Integracion real de endpoints (DB test)', () => {
         .query({ firstName: 'Maria', limit: 20, offset: 0 });
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThan(0);
     });
 
     it('rechaza la busqueda cuando limit es menor al minimo y devuelve 422', async () => {
       const response = await request(app).get('/contacts/search').query({ limit: 0 });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
@@ -116,21 +120,21 @@ describe('Integracion real de endpoints (DB test)', () => {
       const response = await request(app).get('/contacts/by-phone').query({ number: '11-1234-5678', type: 'mobile' });
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body.data.length).toBeGreaterThan(0);
     });
 
     it('rechaza la consulta si falta el tipo de telefono y devuelve 422', async () => {
       const response = await request(app).get('/contacts/by-phone').query({ number: '11-1234-5678' });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
   describe('PATCH /contacts/:id - Edicion de datos personales', () => {
     it('actualiza datos personales de un contacto existente y devuelve 200 con los cambios', async () => {
       const created = await createContact({ firstName: 'Paula', lastName: 'Diaz', email: `paula.${Date.now()}@example.com` });
-      const id = Number(created.body.id);
+      const id = Number(created.body.data.id);
 
       const response = await request(app).patch(`/contacts/${id}`).send({
         firstName: 'Paula Maria',
@@ -140,24 +144,24 @@ describe('Integracion real de endpoints (DB test)', () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.body.firstName).toBe('Paula Maria');
+      expect(response.body.data.firstName).toBe('Paula Maria');
     });
 
     it('rechaza la edicion cuando el body llega vacio y devuelve 422', async () => {
       const created = await createContact({ firstName: 'Paula', lastName: 'Diaz', email: `paula.${Date.now()}@example.com` });
-      const id = Number(created.body.id);
+      const id = Number(created.body.data.id);
 
       const response = await request(app).patch(`/contacts/${id}`).send({});
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
   describe('DELETE /contacts/:id - Eliminacion de contacto', () => {
     it('elimina un contacto existente y responde 204 sin contenido', async () => {
       const created = await createContact({ firstName: 'Juan', lastName: 'Mendez', email: `juan.${Date.now()}@example.com` });
-      const id = Number(created.body.id);
+      const id = Number(created.body.data.id);
 
       const response = await request(app).delete(`/contacts/${id}`);
 
@@ -168,14 +172,14 @@ describe('Integracion real de endpoints (DB test)', () => {
       const response = await request(app).delete('/contacts/999999');
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Contacto no encontrado.');
+      expect(response.body.error.message).toBe('Contacto no encontrado.');
     });
   });
 
   describe('POST /activities - Creacion de actividad', () => {
     it('crea una actividad para un contacto existente y devuelve 201 con el registro creado', async () => {
       const created = await createContact({ firstName: 'Rocio', lastName: 'Fernandez', email: `rocio.${Date.now()}@example.com` });
-      const personId = Number(created.body.id);
+      const personId = Number(created.body.data.id);
 
       const response = await request(app).post('/activities').send({
         personId,
@@ -185,12 +189,12 @@ describe('Integracion real de endpoints (DB test)', () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body.activityType).toBe('call');
+      expect(response.body.data.activityType).toBe('call');
     });
 
     it('rechaza la creacion cuando activityType no pertenece al enum y devuelve 422', async () => {
       const created = await createContact({ firstName: 'Rocio', lastName: 'Fernandez', email: `rocio.${Date.now()}@example.com` });
-      const personId = Number(created.body.id);
+      const personId = Number(created.body.data.id);
 
       const response = await request(app).post('/activities').send({
         personId,
@@ -199,14 +203,14 @@ describe('Integracion real de endpoints (DB test)', () => {
       });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 
   describe('GET /activities/search - Busqueda por contacto y tipo', () => {
     it('devuelve actividades filtradas por contacto y tipo incluyendo detalle de contacto', async () => {
       const created = await createContact({ firstName: 'Clara', lastName: 'Ruiz', email: `clara.${Date.now()}@example.com` });
-      const personId = Number(created.body.id);
+      const personId = Number(created.body.data.id);
 
       await request(app).post('/activities').send({
         personId,
@@ -220,15 +224,15 @@ describe('Integracion real de endpoints (DB test)', () => {
         .query({ personId, activityType: 'meeting' });
 
       expect(response.status).toBe(200);
-      expect(response.body.length).toBeGreaterThan(0);
-      expect(response.body[0].contact.email).toBeDefined();
+      expect(response.body.data.length).toBeGreaterThan(0);
+      expect(response.body.data[0].contact.email).toBeDefined();
     });
 
     it('rechaza la busqueda cuando personId es invalido y devuelve 422', async () => {
       const response = await request(app).get('/activities/search').query({ personId: 0, activityType: 'meeting' });
 
       expect(response.status).toBe(422);
-      expect(response.body.message).toBe('Error de validacion.');
+      expect(response.body.error.message).toBe('Error de validacion.');
     });
   });
 });

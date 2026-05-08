@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 
 import { AppError } from './app-error';
+import { sendError } from '../http/api-response';
 
 const zodIssueMessageEs: Record<string, string> = {
   invalid_type: 'Tipo de dato invalido.',
@@ -19,9 +20,9 @@ export const errorHandler = (
   _next: NextFunction,
 ): void => {
   if (error instanceof ZodError) {
-    res.status(422).json({
-      message: 'Error de validacion.',
-      issues: error.issues.map((issue) => ({
+    sendError(res, 422, 'Error de validacion.', {
+      code: 'VALIDATION_ERROR',
+      details: error.issues.map((issue) => ({
         path: issue.path,
         message: zodIssueMessageEs[issue.code] ?? 'Dato invalido.',
         code: issue.code,
@@ -31,9 +32,9 @@ export const errorHandler = (
   }
 
   if (error instanceof AppError) {
-    res.status(error.statusCode).json({ message: error.message });
+    sendError(res, error.statusCode, error.message);
     return;
   }
 
-  res.status(500).json({ message: 'Error interno inesperado.' });
+  sendError(res, 500, 'Error interno inesperado.');
 };

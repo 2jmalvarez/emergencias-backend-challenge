@@ -7,12 +7,14 @@ import { openApiDocument } from './docs/openapi';
 import { activityRoutes } from './modules/activities/activity.routes';
 import { contactRoutes } from './modules/contacts/contact.routes';
 import { errorHandler } from './shared/errors/error-handler.middleware';
+import { httpLogger } from './shared/logging/http-logger';
 
 export const app = express();
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(httpLogger);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });

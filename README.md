@@ -58,3 +58,10 @@ Servidor en `http://localhost:3000`.
 - `GET /activities/search?personId=&activityType=`
 
 Documentacion OpenAPI minimal en `GET /docs`.
+
+## SQL por modulo
+
+- Activities: `src/modules/activities/sql/*.sql`
+- Contacts: `src/modules/contacts/sql/*.sql`
+
+El runtime lee estos SQL desde `dist` y, si no existen alli, usa `src` como respaldo.

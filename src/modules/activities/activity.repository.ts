@@ -1,5 +1,8 @@
 import type { ActivityWithContact, CreateActivityDto } from './activity.types';
 import { pool } from '../../config/db';
+import { createSqlLoader } from '../../shared/utils/sql-loader';
+
+const sql = createSqlLoader(__dirname);
 
 type CreatedActivity = {
   id: number;
@@ -12,9 +15,7 @@ type CreatedActivity = {
 export class ActivityRepository {
   public async create(input: CreateActivityDto): Promise<CreatedActivity> {
     const result = await pool.query<CreatedActivity>(
-      `INSERT INTO contact_activities (person_id, activity_type, activity_date, description)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, person_id AS "personId", activity_type AS "activityType", activity_date AS "activityDate", description`,
+      sql('create-activity.sql'),
       [input.personId, input.activityType, input.activityDate, input.description ?? null],
     );
 
@@ -25,25 +26,10 @@ export class ActivityRepository {
     personId: number,
     activityType: 'call' | 'meeting' | 'email',
   ): Promise<ActivityWithContact[]> {
-    const result = await pool.query<ActivityWithContact>(
-      `SELECT
-         ca.id,
-         ca.person_id AS "personId",
-         ca.activity_type AS "activityType",
-         ca.activity_date AS "activityDate",
-         ca.description,
-         JSON_BUILD_OBJECT(
-           'firstName', p.first_name,
-           'lastName', p.last_name,
-           'email', p.email,
-           'dateOfBirth', p.date_of_birth
-         ) AS contact
-       FROM contact_activities ca
-       JOIN person p ON p.id = ca.person_id
-       WHERE ca.person_id = $1 AND ca.activity_type = $2
-       ORDER BY ca.activity_date DESC`,
-      [personId, activityType],
-    );
+    const result = await pool.query<ActivityWithContact>(sql('search-activities-by-contact-and-type.sql'), [
+      personId,
+      activityType,
+    ]);
 
     return result.rows;
   }

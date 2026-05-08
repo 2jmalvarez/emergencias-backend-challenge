@@ -1,0 +1,4 @@
+UPDATE person
+SET {{SET_CLAUSES}}
+WHERE id = ${{ID_INDEX}}
+RETURNING id;

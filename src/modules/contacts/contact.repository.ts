@@ -2,21 +2,24 @@ import type { PoolClient } from 'pg';
 
 import type { ContactDetails, ContactSummary, CreateContactDto, UpdateContactDto } from './contact.types';
 import { pool } from '../../config/db';
+import { createSqlLoader } from '../../shared/utils/sql-loader';
 
 const normalizePhone = (value: string): string =>
   value.replaceAll(' ', '').replaceAll('-', '');
+
+const sql = createSqlLoader(__dirname);
 
 export class ContactRepository {
   public async create(input: CreateContactDto): Promise<ContactDetails> {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const personResult = await client.query<{ id: number }>(
-        `INSERT INTO person (first_name, last_name, date_of_birth, email)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-        [input.firstName, input.lastName, input.dateOfBirth, input.email],
-      );
+      const personResult = await client.query<{ id: number }>(sql('create-person.sql'), [
+        input.firstName,
+        input.lastName,
+        input.dateOfBirth,
+        input.email,
+      ]);
 
       const personId = personResult.rows[0].id;
 
@@ -34,7 +37,7 @@ export class ContactRepository {
   }
 
   public async findByEmail(email: string): Promise<ContactDetails | null> {
-    const person = await pool.query<{ id: number }>('SELECT id FROM person WHERE email = $1', [email]);
+    const person = await pool.query<{ id: number }>(sql('find-person-id-by-email.sql'), [email]);
     if (person.rowCount === 0) {
       return null;
     }
@@ -69,13 +72,13 @@ export class ContactRepository {
     values.push(filters.offset);
     const offsetIndex = values.length;
 
-    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const searchContactsSql = sql('search-contacts.sql')
+      .replace('{{WHERE_CLAUSE}}', whereClause)
+      .replace('${{LIMIT_INDEX}}', String(limitIndex))
+      .replace('${{OFFSET_INDEX}}', String(offsetIndex));
     const result = await pool.query<ContactSummary>(
-      `SELECT id, first_name AS "firstName", last_name AS "lastName", date_of_birth AS "dateOfBirth", email
-       FROM person
-       ${where}
-       ORDER BY id
-       LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+      searchContactsSql,
       values,
     );
 
@@ -84,16 +87,10 @@ export class ContactRepository {
 
   public async findByPhone(number: string, type: string): Promise<ContactSummary[]> {
     const normalized = normalizePhone(number);
-    const result = await pool.query<ContactSummary>(
-      String.raw`SELECT DISTINCT p.id, p.first_name AS "firstName", p.last_name AS "lastName", p.date_of_birth AS "dateOfBirth", p.email
-       FROM person p
-       JOIN phone ph ON ph.person_id = p.id
-       JOIN phone_type pt ON pt.id = ph.phone_type_id
-       WHERE REGEXP_REPLACE(ph.number, '[\\s-]', '', 'g') = $1
-         AND LOWER(pt.type_name) = LOWER($2)
-       ORDER BY p.id`,
-      [normalized, type],
-    );
+    const result = await pool.query<ContactSummary>(sql('find-contacts-by-phone-and-type.sql'), [
+      normalized,
+      type,
+    ]);
     return result.rows;
   }
 
@@ -106,11 +103,11 @@ export class ContactRepository {
     const setClauses = entries.map(([key], idx) => `${this.toDbColumn(key)} = $${idx + 1}`);
     const values = entries.map(([, value]) => value);
     values.push(String(id));
+    const updatePersonSql = sql('update-person-by-id.sql')
+      .replace('{{SET_CLAUSES}}', setClauses.join(', '))
+      .replace('${{ID_INDEX}}', String(values.length));
 
-    const result = await pool.query(
-      `UPDATE person SET ${setClauses.join(', ')} WHERE id = $${values.length} RETURNING id`,
-      values,
-    );
+    const result = await pool.query(updatePersonSql, values);
 
     if (result.rowCount === 0) {
       return null;
@@ -119,32 +116,21 @@ export class ContactRepository {
   }
 
   public async delete(id: number): Promise<boolean> {
-    const result = await pool.query('DELETE FROM person WHERE id = $1', [id]);
+    const result = await pool.query(sql('delete-person-by-id.sql'), [id]);
     return (result.rowCount ?? 0) > 0;
   }
 
   public async findById(id: number): Promise<ContactDetails | null> {
-    const person = await pool.query<ContactSummary>(
-      `SELECT id, first_name AS "firstName", last_name AS "lastName", date_of_birth AS "dateOfBirth", email
-       FROM person WHERE id = $1`,
-      [id],
-    );
+    const person = await pool.query<ContactSummary>(sql('find-contact-summary-by-id.sql'), [id]);
     if (person.rowCount === 0) {
       return null;
     }
     const phones = await pool.query<ContactDetails['phones'][number]>(
-      `SELECT ph.id, ph.number, ph.phone_type_id AS "phoneTypeId", pt.type_name AS "phoneTypeName"
-       FROM phone ph
-       JOIN phone_type pt ON pt.id = ph.phone_type_id
-       WHERE ph.person_id = $1
-       ORDER BY ph.id`,
+      sql('find-phones-by-person-id.sql'),
       [id],
     );
     const addresses = await pool.query<ContactDetails['addresses'][number]>(
-      `SELECT id, locality, street, number, notes
-       FROM address
-       WHERE person_id = $1
-       ORDER BY id`,
+      sql('find-addresses-by-person-id.sql'),
       [id],
     );
 
@@ -169,11 +155,7 @@ export class ContactRepository {
     phones: CreateContactDto['phones'],
   ): Promise<void> {
     for (const phone of phones) {
-      await client.query(
-        `INSERT INTO phone (number, person_id, phone_type_id)
-         VALUES ($1, $2, $3)`,
-        [phone.number, personId, phone.phoneTypeId],
-      );
+      await client.query(sql('insert-phone.sql'), [phone.number, personId, phone.phoneTypeId]);
     }
   }
 
@@ -183,11 +165,13 @@ export class ContactRepository {
     addresses: CreateContactDto['addresses'],
   ): Promise<void> {
     for (const address of addresses) {
-      await client.query(
-        `INSERT INTO address (person_id, locality, street, number, notes)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [personId, address.locality, address.street, address.number, address.notes ?? null],
-      );
+      await client.query(sql('insert-address.sql'), [
+        personId,
+        address.locality,
+        address.street,
+        address.number,
+        address.notes ?? null,
+      ]);
     }
   }
 

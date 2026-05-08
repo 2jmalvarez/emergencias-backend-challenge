@@ -16,7 +16,7 @@ docker compose -f infra/local/postgres/docker-compose.yml up --build -d
 DB por defecto:
 
 - Host: `localhost`
-- Port: `55433`
+- Port: `55434`
 - Database: `emergencias`
 - User: `emergencias`
 - Password: `emergencias`
@@ -35,6 +35,9 @@ Servidor en `http://localhost:3000`.
 - `npm run dev`
 - `npm run build`
 - `npm run start`
+- `npm run db:up`
+- `npm run db:down`
+- `npm run db:reset`
 - `npm run lint`
 - `npm run lint:fix`
 - `npm run format`

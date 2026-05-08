@@ -5,7 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z
     .string()
-    .default('postgresql://emergencias:emergencias@localhost:55433/emergencias'),
+    .default('postgresql://emergencias:emergencias@localhost:55434/emergencias'),
 });
 
 export const env = envSchema.parse(process.env);

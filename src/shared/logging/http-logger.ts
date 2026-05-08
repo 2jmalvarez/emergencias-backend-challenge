@@ -3,7 +3,7 @@ import morgan from 'morgan';
 
 import { ansi } from './ansi';
 
-const toSafeJson = (value: unknown): string => {
+export const toSafeJson = (value: unknown): string => {
   if (value === null || value === undefined) {
     return ansi.gray('-');
   }
@@ -23,7 +23,7 @@ const toSafeJson = (value: unknown): string => {
   return JSON.stringify(value, null, 2);
 };
 
-const methodColor = (method: string): string => {
+export const methodColor = (method: string): string => {
   switch (method) {
     case 'GET':
       return ansi.cyan(method);
@@ -39,7 +39,7 @@ const methodColor = (method: string): string => {
   }
 };
 
-const statusColor = (status: number): string => {
+export const statusColor = (status: number): string => {
   if (status >= 500) {
     return ansi.red(String(status));
   }

@@ -23,13 +23,24 @@ npm install
 
 ```bash
 copy .env.example .env
+copy .env.example .env.test
 ```
+
+Archivos:
+
+- `.env`: variables para desarrollo (`npm run dev`)
+- `.env.test`: variables para testing (usado automaticamente por los scripts de test)
+
+Cada archivo debe tener su propia `DATABASE_URL`:
+
+- `.env` → `DATABASE_URL` (puerto 55434 - dev)
+- `.env.test` → `DATABASE_URL` (puerto 55435 - test)
 
 Variables principales:
 
 - `PORT`: puerto HTTP de la API
-- `DATABASE_URL`: conexion a base de desarrollo
-- `DATABASE_URL_TEST`: conexion a base de test
+- `DATABASE_URL`: conexion a base de datos (cada archivo tiene la suya)
+- `INTEGRATION_TESTS`: habilita tests de integracion (solo en `.env.test`)
 
 ### 4) Levantar base de desarrollo
 
@@ -209,8 +220,10 @@ El loader usa cache y fallback `dist -> src`.
 | `npm run db:test:down`          | Detiene la DB de test.                                                  |
 | `npm run db:test:reset`         | Reinicia la DB de test desde cero para pruebas reproducibles.           |
 | `npm run test`                  | Ejecuta la suite completa de tests con salida verbose.                  |
-| `npm run test:integration`      | Ejecuta solo tests de integracion contra `DATABASE_URL_TEST`.           |
+| `npm run test:unit`             | Ejecuta tests unitarios (modulos y shared).                             |
+| `npm run test:integration`      | Ejecuta solo tests de integracion contra `.env.test`.                 |
 | `npm run test:integration:full` | Resetea DB de test y luego ejecuta tests de integracion.                |
+| `npm run test:coverage`         | Ejecuta tests con reporte de cobertura.                                 |
 | `npm run lint`                  | Corre ESLint sobre todo el proyecto.                                    |
 | `npm run lint:fix`              | Corre ESLint y aplica fixes automaticos cuando es posible.              |
 | `npm run format`                | Formatea el proyecto con Prettier.                                      |
@@ -235,7 +248,34 @@ Toda la documentacion de request/response, status codes y ejemplos se encuentra 
 
 ---
 
-## Testing de integracion (sin mocks de DB)
+## Testing
+
+Los scripts de test utilizan `dotenv-cli` para cargar automaticamente las variables desde `.env.test`, evitando hardcodear URLs en los scripts.
+
+### Unit tests
+
+Ejecucion:
+
+```bash
+npm run test:unit
+```
+
+Suites unitarias actuales:
+
+- `tests/unit/modules/contact.service.unit.test.ts`
+- `tests/unit/modules/activity.service.unit.test.ts`
+- `tests/unit/shared.db-error-mapper.unit.test.ts`
+- `tests/unit/shared.api-response.unit.test.ts`
+- `tests/unit/shared.validate-request.unit.test.ts`
+- `tests/unit/shared.logging.unit.test.ts`
+
+Cobertura:
+
+```bash
+npm run test:coverage
+```
+
+### Integracion (sin mocks de DB)
 
 Para ejecutar pruebas reales contra la base de test:
 
@@ -250,7 +290,7 @@ Flujo completo recomendado:
 npm run test:integration:full
 ```
 
-Suites actuales:
+Suites de integracion actuales:
 
 - `tests/integration/contacts.integration.test.ts`
 - `tests/integration/activity.integration.test.ts`
@@ -260,3 +300,5 @@ Si la DB de test no esta levantada, el setup falla con mensaje explicito indican
 
 - `npm run db:test:up`
 - `npm run db:test:reset`
+
+**Nota**: Los tests requieren que la variable `INTEGRATION_TESTS=true` este presente en `.env.test` (incluida por defecto en el archivo de ejemplo).

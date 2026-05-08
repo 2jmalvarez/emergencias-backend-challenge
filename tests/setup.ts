@@ -1,6 +1,10 @@
 import { pool } from '../src/config/db';
 
 beforeAll(async () => {
+  if (process.env.INTEGRATION_TESTS !== 'true') {
+    return;
+  }
+
   try {
     await pool.query('SELECT 1');
   } catch {

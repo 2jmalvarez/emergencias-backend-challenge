@@ -17,9 +17,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "test": "cross-env DATABASE_URL_TEST=postgresql://emergencias:emergencias@127.0.0.1:55435/emergencias_test jest --runInBand --verbose --passWithNoTests",
-    "test:integration": "cross-env DATABASE_URL_TEST=postgresql://emergencias:emergencias@127.0.0.1:55435/emergencias_test jest --runInBand --verbose --passWithNoTests tests/integration",
-    "test:integration:full": "npm run db:test:reset && npm run test:integration"
+    "test": "dotenv -e .env.test -- jest --runInBand --verbose --passWithNoTests",
+    "test:unit": "dotenv -e .env.test -- jest --runInBand --verbose --passWithNoTests tests/unit",
+    "test:integration": "dotenv -e .env.test -- jest --runInBand --verbose --passWithNoTests tests/integration",
+    "test:integration:full": "npm run db:test:reset && npm run test:integration",
+    "test:coverage": "dotenv -e .env.test -- jest --runInBand --coverage"
   },
   "keywords": [],
   "author": "",
@@ -51,6 +53,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "dotenv-cli": "^8.0.0",
     "jest": "^30.4.0",
     "prettier": "^3.8.3",
     "supertest": "^7.2.2",

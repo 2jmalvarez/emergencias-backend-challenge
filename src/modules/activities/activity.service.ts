@@ -1,5 +1,7 @@
-import { ActivityRepository } from './activity.repository';
 import type { ActivityWithContact, CreateActivityDto } from './activity.types';
+
+import { ActivityRepository } from './activity.repository';
+
 import { PG_ERROR_CODES } from '../../shared/errors/db-error-codes';
 import { throwMappedDbError } from '../../shared/errors/db-error-mapper';
 
@@ -27,7 +29,10 @@ export class ActivityService {
     }
   }
 
-  public async search(personId: number, activityType: 'call' | 'meeting' | 'email'): Promise<ActivityWithContact[]> {
+  public async search(
+    personId: number,
+    activityType: 'call' | 'meeting' | 'email',
+  ): Promise<ActivityWithContact[]> {
     return this.repository.searchByContactAndType(personId, activityType);
   }
 }

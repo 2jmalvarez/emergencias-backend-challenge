@@ -1,9 +1,5 @@
+import type { createContactBodySchema, updateContactSchema } from './contact.schemas';
 import type { z } from 'zod';
-
-import type {
-  createContactBodySchema,
-  updateContactSchema,
-} from './contact.schemas';
 
 export type CreateContactDto = z.infer<typeof createContactBodySchema>;
 export type UpdateContactDto = z.infer<typeof updateContactSchema>['body'];

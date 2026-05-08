@@ -1,5 +1,6 @@
-import type { Request } from 'express';
 import morgan from 'morgan';
+
+import type { Request } from 'express';
 
 import { ansi } from './ansi';
 

@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 
 import { createActivitySchema, searchActivitiesSchema } from './activity.schemas';
 import { ActivityService } from './activity.service';
+
 import { sendSuccess } from '../../shared/http/api-response';
 
 export class ActivityController {

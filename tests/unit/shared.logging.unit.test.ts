@@ -1,6 +1,6 @@
 import { ansi } from '../../src/shared/logging/ansi';
-import { logStartup } from '../../src/shared/logging/startup-logger';
 import { toSafeJson, methodColor, statusColor } from '../../src/shared/logging/http-logger';
+import { logStartup } from '../../src/shared/logging/startup-logger';
 
 describe('ansi unit', () => {
   it('bold envuelve texto con codigo ANSI bold', () => {

@@ -30,7 +30,9 @@ describe('Integracion activities (DB test)', () => {
   };
 
   beforeAll(async () => {
-    await pool.query("INSERT INTO phone_type (type_name) VALUES ('mobile') ON CONFLICT (type_name) DO NOTHING");
+    await pool.query(
+      "INSERT INTO phone_type (type_name) VALUES ('mobile') ON CONFLICT (type_name) DO NOTHING",
+    );
     const result = await pool.query<{ id: number }>(
       "SELECT id FROM phone_type WHERE type_name = 'mobile' LIMIT 1",
     );
@@ -45,7 +47,11 @@ describe('Integracion activities (DB test)', () => {
   });
 
   it('POST /activities crea una actividad para un contacto existente y devuelve 201 con el registro creado', async () => {
-    const created = await createContact({ firstName: 'Rocio', lastName: 'Fernandez', email: `rocio.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Rocio',
+      lastName: 'Fernandez',
+      email: `rocio.${Date.now()}@example.com`,
+    });
     const personId = Number(created.body.data.id);
 
     const response = await request(app).post('/activities').send({
@@ -60,7 +66,11 @@ describe('Integracion activities (DB test)', () => {
   });
 
   it('POST /activities rechaza la creacion cuando activityType no pertenece al enum y devuelve 422', async () => {
-    const created = await createContact({ firstName: 'Rocio', lastName: 'Fernandez', email: `rocio.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Rocio',
+      lastName: 'Fernandez',
+      email: `rocio.${Date.now()}@example.com`,
+    });
     const personId = Number(created.body.data.id);
 
     const response = await request(app).post('/activities').send({
@@ -74,7 +84,11 @@ describe('Integracion activities (DB test)', () => {
   });
 
   it('GET /activities/search devuelve actividades filtradas por contacto y tipo incluyendo detalle de contacto', async () => {
-    const created = await createContact({ firstName: 'Clara', lastName: 'Ruiz', email: `clara.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Clara',
+      lastName: 'Ruiz',
+      email: `clara.${Date.now()}@example.com`,
+    });
     const personId = Number(created.body.data.id);
 
     await request(app).post('/activities').send({
@@ -84,7 +98,9 @@ describe('Integracion activities (DB test)', () => {
       description: 'Reunion presencial.',
     });
 
-    const response = await request(app).get('/activities/search').query({ personId, activityType: 'meeting' });
+    const response = await request(app)
+      .get('/activities/search')
+      .query({ personId, activityType: 'meeting' });
 
     expect(response.status).toBe(200);
     expect(response.body.data.length).toBeGreaterThan(0);
@@ -92,7 +108,9 @@ describe('Integracion activities (DB test)', () => {
   });
 
   it('GET /activities/search rechaza la busqueda cuando personId es invalido y devuelve 422', async () => {
-    const response = await request(app).get('/activities/search').query({ personId: 0, activityType: 'meeting' });
+    const response = await request(app)
+      .get('/activities/search')
+      .query({ personId: 0, activityType: 'meeting' });
 
     expect(response.status).toBe(422);
     expect(response.body.error.message).toBe('Error de validacion.');

@@ -1,11 +1,15 @@
+import type {
+  ContactDetails,
+  ContactSummary,
+  CreateContactDto,
+  UpdateContactDto,
+} from './contact.types';
 import type { PoolClient } from 'pg';
 
-import type { ContactDetails, ContactSummary, CreateContactDto, UpdateContactDto } from './contact.types';
 import { pool } from '../../config/db';
 import { createSqlLoader } from '../../shared/utils/sql-loader';
 
-const normalizePhone = (value: string): string =>
-  value.replaceAll(' ', '').replaceAll('-', '');
+const normalizePhone = (value: string): string => value.replaceAll(' ', '').replaceAll('-', '');
 
 const sql = createSqlLoader(__dirname);
 
@@ -77,10 +81,7 @@ export class ContactRepository {
       .replace('{{WHERE_CLAUSE}}', whereClause)
       .replace('{{LIMIT_INDEX}}', `$${limitIndex}`)
       .replace('{{OFFSET_INDEX}}', `$${offsetIndex}`);
-    const result = await pool.query<ContactSummary>(
-      searchContactsSql,
-      values,
-    );
+    const result = await pool.query<ContactSummary>(searchContactsSql, values);
 
     return result.rows;
   }

@@ -9,6 +9,7 @@ import {
   searchContactsSchema,
   updateContactSchema,
 } from './contact.schemas';
+
 import { validateRequest } from '../../shared/middleware/validate-request';
 
 const router = Router();

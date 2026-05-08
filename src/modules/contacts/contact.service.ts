@@ -1,5 +1,12 @@
+import type {
+  ContactDetails,
+  ContactSummary,
+  CreateContactDto,
+  UpdateContactDto,
+} from './contact.types';
+
 import { ContactRepository } from './contact.repository';
-import type { ContactDetails, ContactSummary, CreateContactDto, UpdateContactDto } from './contact.types';
+
 import { AppError } from '../../shared/errors/app-error';
 import { PG_ERROR_CODES } from '../../shared/errors/db-error-codes';
 import { throwMappedDbError } from '../../shared/errors/db-error-mapper';

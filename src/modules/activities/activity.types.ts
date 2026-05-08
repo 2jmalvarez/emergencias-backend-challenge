@@ -1,6 +1,5 @@
-import type { z } from 'zod';
-
 import type { createActivityBodySchema } from './activity.schemas';
+import type { z } from 'zod';
 
 export type CreateActivityDto = z.infer<typeof createActivityBodySchema>;
 

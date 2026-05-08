@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: emergencias
       POSTGRES_PASSWORD: emergencias
     ports:
-      - "55434:5432"
+      - '55434:5432'
     volumes:
       - emergencias_pg_data_dev:/var/lib/postgresql/data
 
@@ -23,7 +23,7 @@ services:
       POSTGRES_USER: emergencias
       POSTGRES_PASSWORD: emergencias
     ports:
-      - "55435:5432"
+      - '55435:5432'
     volumes:
       - /var/lib/postgresql/data
 

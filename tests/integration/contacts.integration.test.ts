@@ -30,7 +30,9 @@ describe('Integracion contactos (DB test)', () => {
   };
 
   beforeAll(async () => {
-    await pool.query("INSERT INTO phone_type (type_name) VALUES ('mobile') ON CONFLICT (type_name) DO NOTHING");
+    await pool.query(
+      "INSERT INTO phone_type (type_name) VALUES ('mobile') ON CONFLICT (type_name) DO NOTHING",
+    );
     const result = await pool.query<{ id: number }>(
       "SELECT id FROM phone_type WHERE type_name = 'mobile' LIMIT 1",
     );
@@ -77,16 +79,24 @@ describe('Integracion contactos (DB test)', () => {
   });
 
   it('GET /contacts/by-email rechaza la busqueda cuando el email tiene formato invalido y devuelve 422', async () => {
-    const response = await request(app).get('/contacts/by-email').query({ email: 'email-invalido' });
+    const response = await request(app)
+      .get('/contacts/by-email')
+      .query({ email: 'email-invalido' });
 
     expect(response.status).toBe(422);
     expect(response.body.error.message).toBe('Error de validacion.');
   });
 
   it('GET /contacts/search busca por datos personales con paginacion y devuelve una lista con resultados', async () => {
-    await createContact({ firstName: 'Maria', lastName: 'Lopez', email: `maria.${Date.now()}@example.com` });
+    await createContact({
+      firstName: 'Maria',
+      lastName: 'Lopez',
+      email: `maria.${Date.now()}@example.com`,
+    });
 
-    const response = await request(app).get('/contacts/search').query({ firstName: 'Maria', limit: 20, offset: 0 });
+    const response = await request(app)
+      .get('/contacts/search')
+      .query({ firstName: 'Maria', limit: 20, offset: 0 });
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body.data)).toBe(true);
@@ -108,7 +118,9 @@ describe('Integracion contactos (DB test)', () => {
       phones: [{ number: '11-1234-5678', phoneTypeId }],
     });
 
-    const response = await request(app).get('/contacts/by-phone').query({ number: '11-1234-5678', type: 'mobile' });
+    const response = await request(app)
+      .get('/contacts/by-phone')
+      .query({ number: '11-1234-5678', type: 'mobile' });
 
     expect(response.status).toBe(200);
     expect(response.body.data.length).toBeGreaterThan(0);
@@ -122,22 +134,32 @@ describe('Integracion contactos (DB test)', () => {
   });
 
   it('PATCH /contacts/:id actualiza datos personales de un contacto existente y devuelve 200 con los cambios', async () => {
-    const created = await createContact({ firstName: 'Paula', lastName: 'Diaz', email: `paula.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Paula',
+      lastName: 'Diaz',
+      email: `paula.${Date.now()}@example.com`,
+    });
     const id = Number(created.body.data.id);
 
-    const response = await request(app).patch(`/contacts/${id}`).send({
-      firstName: 'Paula Maria',
-      lastName: 'Diaz',
-      dateOfBirth: '1991-01-22',
-      email: `paula.maria.${Date.now()}@example.com`,
-    });
+    const response = await request(app)
+      .patch(`/contacts/${id}`)
+      .send({
+        firstName: 'Paula Maria',
+        lastName: 'Diaz',
+        dateOfBirth: '1991-01-22',
+        email: `paula.maria.${Date.now()}@example.com`,
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.data.firstName).toBe('Paula Maria');
   });
 
   it('PATCH /contacts/:id rechaza la edicion cuando el body llega vacio y devuelve 422', async () => {
-    const created = await createContact({ firstName: 'Paula', lastName: 'Diaz', email: `paula.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Paula',
+      lastName: 'Diaz',
+      email: `paula.${Date.now()}@example.com`,
+    });
     const id = Number(created.body.data.id);
 
     const response = await request(app).patch(`/contacts/${id}`).send({});
@@ -147,7 +169,11 @@ describe('Integracion contactos (DB test)', () => {
   });
 
   it('DELETE /contacts/:id elimina un contacto existente y responde 204 sin contenido', async () => {
-    const created = await createContact({ firstName: 'Juan', lastName: 'Mendez', email: `juan.${Date.now()}@example.com` });
+    const created = await createContact({
+      firstName: 'Juan',
+      lastName: 'Mendez',
+      email: `juan.${Date.now()}@example.com`,
+    });
     const id = Number(created.body.data.id);
 
     const response = await request(app).delete(`/contacts/${id}`);

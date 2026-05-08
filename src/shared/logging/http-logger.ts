@@ -73,4 +73,6 @@ const formatLine = [
   `└────────────────────────────────────────────────────────────────────`,
 ].join('\n');
 
-export const httpLogger = morgan(formatLine);
+export const httpLogger = morgan(formatLine, {
+  skip: () => process.env.NODE_ENV === 'test',
+});

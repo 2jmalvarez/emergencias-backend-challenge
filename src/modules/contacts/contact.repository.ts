@@ -75,8 +75,8 @@ export class ContactRepository {
     const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
     const searchContactsSql = sql('search-contacts.sql')
       .replace('{{WHERE_CLAUSE}}', whereClause)
-      .replace('${{LIMIT_INDEX}}', String(limitIndex))
-      .replace('${{OFFSET_INDEX}}', String(offsetIndex));
+      .replace('{{LIMIT_INDEX}}', `$${limitIndex}`)
+      .replace('{{OFFSET_INDEX}}', `$${offsetIndex}`);
     const result = await pool.query<ContactSummary>(
       searchContactsSql,
       values,
@@ -101,11 +101,11 @@ export class ContactRepository {
     }
 
     const setClauses = entries.map(([key], idx) => `${this.toDbColumn(key)} = $${idx + 1}`);
-    const values = entries.map(([, value]) => value);
-    values.push(String(id));
+    const values: Array<string | number> = entries.map(([, value]) => value);
+    values.push(id);
     const updatePersonSql = sql('update-person-by-id.sql')
       .replace('{{SET_CLAUSES}}', setClauses.join(', '))
-      .replace('${{ID_INDEX}}', String(values.length));
+      .replace('{{ID_INDEX}}', `$${values.length}`);
 
     const result = await pool.query(updatePersonSql, values);
 

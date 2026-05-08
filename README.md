@@ -9,17 +9,42 @@ API RESTful en Node.js + TypeScript + Express para gestionar contactos y activid
 
 ## Levantar base de datos local
 
+### DB de desarrollo
+
 ```bash
-docker compose -f infra/local/postgres/docker-compose.yml up --build -d
+npm run db:up
 ```
 
-DB por defecto:
-
-- Host: `localhost`
+- Host: `127.0.0.1`
 - Port: `55434`
-- Database: `emergencias`
+- Database: `emergencias_dev`
 - User: `emergencias`
 - Password: `emergencias`
+
+### DB de test
+
+```bash
+npm run db:test:up
+```
+
+- Host: `127.0.0.1`
+- Port: `55435`
+- Database: `emergencias_test`
+- User: `emergencias`
+- Password: `emergencias`
+
+## Seeds
+
+- Dataset base (CI/local): `infra/local/postgres/seed/default/*.sql`
+- Snapshots sanitizados (reservado): `infra/local/postgres/seed/snapshots/*`
+
+## Variables de entorno
+
+Copiar `.env.example` a `.env` y completar:
+
+- `PORT`
+- `DATABASE_URL` (desarrollo)
+- `DATABASE_URL_TEST` (tests de integracion)
 
 ## Ejecutar API
 
@@ -28,7 +53,10 @@ npm install
 npm run dev
 ```
 
-Nota: `DATABASE_URL` es obligatoria y se toma desde el archivo `.env`.
+Notas:
+
+- En `NODE_ENV=test` la app usa `DATABASE_URL_TEST` (obligatoria para tests).
+- En desarrollo/produccion la app usa `DATABASE_URL`.
 
 Servidor en `http://localhost:3000`.
 
@@ -40,11 +68,16 @@ Servidor en `http://localhost:3000`.
 - `npm run db:up`
 - `npm run db:down`
 - `npm run db:reset`
+- `npm run db:test:up`
+- `npm run db:test:down`
+- `npm run db:test:reset`
 - `npm run lint`
 - `npm run lint:fix`
 - `npm run format`
 - `npm run format:check`
 - `npm test`
+- `npm run test:integration`
+- `npm run test:integration:full`
 
 ## Endpoints
 

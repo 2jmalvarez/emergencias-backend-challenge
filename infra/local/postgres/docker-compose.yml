@@ -1,17 +1,32 @@
 services:
-  emergencias-postgres:
+  emergencias-postgres-dev:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: emergencias-postgres
+    container_name: emergencias-postgres-dev
     environment:
-      POSTGRES_DB: emergencias
+      POSTGRES_DB: emergencias_dev
       POSTGRES_USER: emergencias
       POSTGRES_PASSWORD: emergencias
     ports:
       - "55434:5432"
     volumes:
-      - emergencias_pg_data:/var/lib/postgresql/data
+      - emergencias_pg_data_dev:/var/lib/postgresql/data
+
+  emergencias-postgres-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: emergencias-postgres-test
+    environment:
+      POSTGRES_DB: emergencias_test
+      POSTGRES_USER: emergencias
+      POSTGRES_PASSWORD: emergencias
+    ports:
+      - "55435:5432"
+    volumes:
+      - /var/lib/postgresql/data
 
 volumes:
-  emergencias_pg_data:
+  emergencias_pg_data_dev:
+    name: emergencias_pg_data_dev

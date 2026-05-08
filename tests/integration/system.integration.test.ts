@@ -2,13 +2,13 @@ import request from 'supertest';
 
 import { app } from '../../src/app';
 
-describe('health', () => {
+describe('Integracion system (DB test)', () => {
   beforeEach(() => {
     const testName = expect.getState().currentTestName;
     console.log(`\n[TEST] ${testName}`);
   });
 
-  it('returns ok', async () => {
+  it('GET /health responde 200 e informa estado operativo de la API', async () => {
     const response = await request(app).get('/health');
 
     expect(response.status).toBe(200);
